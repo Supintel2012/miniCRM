@@ -5,10 +5,10 @@ import type { Activity } from '@/types/crm'
 
 const typeIcon = { call: Phone, email: Mail, meeting: Video, task: CheckSquare }
 const typeBadge = {
-  call: 'bg-blue-500/10 text-blue-400',
-  email: 'bg-violet-500/10 text-violet-400',
-  meeting: 'bg-emerald-500/10 text-emerald-400',
-  task: 'bg-amber-500/10 text-amber-400',
+  call: 'bg-primary/10 text-primary', // coral
+  email: 'bg-[var(--chart-2)]/15 text-[var(--chart-2)]', // sky
+  meeting: 'bg-[var(--chart-3)]/15 text-[var(--chart-3)]', // navy
+  task: 'bg-[var(--chart-4)]/15 text-[var(--chart-4)]', // slate
 }
 
 export function RecentActivities({ activities }: { activities: Activity[] }) {

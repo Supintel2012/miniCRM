@@ -72,10 +72,10 @@ export function ActivitiesSection({ initialActivities, contactId, dealId }: Acti
                 <div className={cn(
                   'w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5',
                   'bg-muted text-muted-foreground',
-                  activity.type === 'call' && 'bg-blue-500/10 text-blue-400',
-                  activity.type === 'meeting' && 'bg-violet-500/10 text-violet-400',
-                  activity.type === 'email' && 'bg-emerald-500/10 text-emerald-400',
-                  activity.type === 'task' && 'bg-amber-500/10 text-amber-400',
+                  activity.type === 'call' && 'bg-primary/10 text-primary',
+                  activity.type === 'email' && 'bg-[var(--chart-2)]/15 text-[var(--chart-2)]',
+                  activity.type === 'meeting' && 'bg-[var(--chart-3)]/15 text-[var(--chart-3)]',
+                  activity.type === 'task' && 'bg-[var(--chart-4)]/15 text-[var(--chart-4)]',
                 )}>
                   {TYPE_ICONS[activity.type]}
                 </div>

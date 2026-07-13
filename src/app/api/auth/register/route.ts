@@ -11,9 +11,9 @@ const schema = z.object({
 })
 
 const DEFAULT_STAGES = [
-  { name: 'Lead',      color: '#6366f1', position: 0, is_won: false, is_lost: false },
-  { name: 'Qualified', color: '#8b5cf6', position: 1, is_won: false, is_lost: false },
-  { name: 'Proposal',  color: '#f59e0b', position: 2, is_won: false, is_lost: false },
+  { name: 'Lead',      color: '#9ac0d4', position: 0, is_won: false, is_lost: false },
+  { name: 'Qualified', color: '#3d5c7f', position: 1, is_won: false, is_lost: false },
+  { name: 'Proposal',  color: '#ee6b4d', position: 2, is_won: false, is_lost: false },
   { name: 'Won',       color: '#10b981', position: 3, is_won: true,  is_lost: false },
   { name: 'Lost',      color: '#ef4444', position: 4, is_won: false, is_lost: true  },
 ]

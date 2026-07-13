@@ -10,10 +10,10 @@ import { format, isToday, isPast } from 'date-fns'
 import type { Activity } from '@/types/crm'
 
 const typeConfig = {
-  call:    { icon: Phone,       label: 'Call',    className: 'bg-blue-500/10 text-blue-400' },
-  email:   { icon: Mail,        label: 'Email',   className: 'bg-violet-500/10 text-violet-400' },
-  meeting: { icon: Video,       label: 'Meeting', className: 'bg-emerald-500/10 text-emerald-400' },
-  task:    { icon: CheckSquare, label: 'Task',    className: 'bg-amber-500/10 text-amber-400' },
+  call:    { icon: Phone,       label: 'Call',    className: 'bg-primary/10 text-primary' },
+  email:   { icon: Mail,        label: 'Email',   className: 'bg-[var(--chart-2)]/15 text-[var(--chart-2)]' },
+  meeting: { icon: Video,       label: 'Meeting', className: 'bg-[var(--chart-3)]/15 text-[var(--chart-3)]' },
+  task:    { icon: CheckSquare, label: 'Task',    className: 'bg-[var(--chart-4)]/15 text-[var(--chart-4)]' },
 }
 
 export function ActivitiesView({ initialData }: { initialData: Activity[] }) {

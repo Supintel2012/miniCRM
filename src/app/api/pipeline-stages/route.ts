@@ -4,7 +4,7 @@ import { z } from 'zod'
 
 const createStageSchema = z.object({
   name: z.string().min(1),
-  color: z.string().default('#6366f1'),
+  color: z.string().default('#ee6b4d'),
   position: z.number().int().min(0),
   is_won: z.boolean().default(false),
   is_lost: z.boolean().default(false),

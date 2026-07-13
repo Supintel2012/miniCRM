@@ -36,6 +36,12 @@ yarn-error.log*
 # vercel
 .vercel
 
+# agent scratch / tooling
+.llm-scratch/
+.playwright-mcp/
+.serena/
+.remember/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

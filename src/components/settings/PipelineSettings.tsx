@@ -10,7 +10,8 @@ import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import type { PipelineStage } from '@/types/crm'
 
-const PRESET_COLORS = ['#6366f1', '#8b5cf6', '#f59e0b', '#10b981', '#ef4444', '#3b82f6', '#ec4899', '#14b8a6']
+// SI brand ramp first (coral, sky, navy), then success/destructive and extra choices.
+const PRESET_COLORS = ['#ee6b4d', '#9ac0d4', '#3d5c7f', '#10b981', '#ef4444', '#3b82f6', '#ec4899', '#14b8a6']
 
 export function PipelineSettings({ initialStages }: { initialStages: PipelineStage[] }) {
   const [stages, setStages] = useState(initialStages)

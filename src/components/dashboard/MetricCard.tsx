@@ -2,11 +2,13 @@ import { Card, CardContent } from '@/components/ui/card'
 import { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
+// Metric accent slots mapped onto the SI brand ramp (theme-aware chart tokens).
+// Key names are opaque slots kept stable for existing call sites.
 const colorMap = {
-  indigo: 'bg-indigo-500/10 text-indigo-400',
-  violet: 'bg-violet-500/10 text-violet-400',
-  emerald: 'bg-emerald-500/10 text-emerald-400',
-  amber: 'bg-amber-500/10 text-amber-400',
+  indigo: 'bg-[var(--chart-2)]/15 text-[var(--chart-2)]', // sky
+  violet: 'bg-[var(--chart-3)]/15 text-[var(--chart-3)]', // navy
+  emerald: 'bg-primary/10 text-primary', // coral (hero)
+  amber: 'bg-[var(--chart-4)]/15 text-[var(--chart-4)]', // slate
 }
 
 interface MetricCardProps {

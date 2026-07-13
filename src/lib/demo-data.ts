@@ -13,9 +13,9 @@ export const DEMO_PROFILE = {
 }
 
 export const DEMO_STAGES: PipelineStage[] = [
-  { id: 'stage-1', org_id: DEMO_ORG_ID, name: 'Prospecting', color: '#6366f1', position: 0, is_won: false, is_lost: false, created_at: '2024-01-01T00:00:00Z' },
-  { id: 'stage-2', org_id: DEMO_ORG_ID, name: 'Proposal',    color: '#8b5cf6', position: 1, is_won: false, is_lost: false, created_at: '2024-01-01T00:00:00Z' },
-  { id: 'stage-3', org_id: DEMO_ORG_ID, name: 'Negotiation', color: '#f59e0b', position: 2, is_won: false, is_lost: false, created_at: '2024-01-01T00:00:00Z' },
+  { id: 'stage-1', org_id: DEMO_ORG_ID, name: 'Prospecting', color: '#9ac0d4', position: 0, is_won: false, is_lost: false, created_at: '2024-01-01T00:00:00Z' },
+  { id: 'stage-2', org_id: DEMO_ORG_ID, name: 'Proposal',    color: '#3d5c7f', position: 1, is_won: false, is_lost: false, created_at: '2024-01-01T00:00:00Z' },
+  { id: 'stage-3', org_id: DEMO_ORG_ID, name: 'Negotiation', color: '#ee6b4d', position: 2, is_won: false, is_lost: false, created_at: '2024-01-01T00:00:00Z' },
   { id: 'stage-4', org_id: DEMO_ORG_ID, name: 'Won',         color: '#10b981', position: 3, is_won: true,  is_lost: false, created_at: '2024-01-01T00:00:00Z' },
 ]
 
@@ -72,9 +72,9 @@ export const DEMO_METRICS = {
   won_value_30d: 62000,
   activities_due_today: 3,
   deals_by_stage: [
-    { stage_id: 'stage-1', name: 'Prospecting', color: '#6366f1', count: 2, value: 58000 },
-    { stage_id: 'stage-2', name: 'Proposal',    color: '#8b5cf6', count: 3, value: 142000 },
-    { stage_id: 'stage-3', name: 'Negotiation', color: '#f59e0b', count: 2, value: 283000 },
+    { stage_id: 'stage-1', name: 'Prospecting', color: '#9ac0d4', count: 2, value: 58000 },
+    { stage_id: 'stage-2', name: 'Proposal',    color: '#3d5c7f', count: 3, value: 142000 },
+    { stage_id: 'stage-3', name: 'Negotiation', color: '#ee6b4d', count: 2, value: 283000 },
     { stage_id: 'stage-4', name: 'Won',         color: '#10b981', count: 1, value: 62000 },
   ],
 }
