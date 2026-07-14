@@ -1,4 +1,5 @@
 import { createServerClient } from '@supabase/ssr'
+import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
@@ -25,11 +26,12 @@ export async function POST(request: NextRequest) {
 
   const cookieStore = await cookies()
 
-  // Use service role to bypass RLS
-  const adminSupabase = createServerClient(
+  // Use service role to bypass RLS — createClient from @supabase/supabase-js
+  // properly sends the service_role key as both apikey + Authorization header
+  const adminSupabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { cookies: { getAll: () => cookieStore.getAll(), setAll: () => {} } }
+    { auth: { autoRefreshToken: false, persistSession: false } }
   )
 
   // Get the authenticated user
@@ -79,22 +81,31 @@ export async function POST(request: NextRequest) {
   }
 
   // Create or update profile
+  let profileError
   if (existing) {
     // Profile row exists but has no org_id (e.g. pre-existing from project setup)
-    await adminSupabase
+    const r = await adminSupabase
       .from('profiles')
       .update({ org_id: org.id, full_name: nameToUse, role: 'owner' })
       .eq('id', user.id)
+    profileError = r.error
   } else {
-    await adminSupabase
+    const r = await adminSupabase
       .from('profiles')
       .insert({ id: user.id, org_id: org.id, full_name: nameToUse, role: 'owner' })
+    profileError = r.error
+  }
+  if (profileError) {
+    return NextResponse.json({ error: { code: 'PROFILE_ERROR', message: 'Failed to update profile', detail: profileError.message } }, { status: 500 })
   }
 
   // Create default pipeline stages
-  await adminSupabase.from('pipeline_stages').insert(
+  const { error: stagesError } = await adminSupabase.from('pipeline_stages').insert(
     DEFAULT_STAGES.map(s => ({ ...s, org_id: org.id }))
   )
+  if (stagesError) {
+    return NextResponse.json({ error: { code: 'STAGES_ERROR', message: 'Failed to create pipeline stages', detail: stagesError.message } }, { status: 500 })
+  }
 
   return NextResponse.json({ data: { ok: true } }, { status: 201 })
 }

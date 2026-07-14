@@ -1,4 +1,5 @@
 import { createServerClient } from '@supabase/ssr'
+import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
@@ -29,10 +30,10 @@ export async function POST(request: NextRequest) {
   const cookieStore = await cookies()
 
   // Use service role for registration to bypass RLS
-  const adminSupabase = createServerClient(
+  const adminSupabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { cookies: { getAll: () => cookieStore.getAll(), setAll: () => {} } }
+    { auth: { autoRefreshToken: false, persistSession: false } }
   )
 
   // Create auth user
