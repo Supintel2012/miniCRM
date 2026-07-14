@@ -2,7 +2,7 @@ export type UserRole = 'owner' | 'admin' | 'member'
 export type ActivityType = 'call' | 'email' | 'meeting' | 'task'
 export type ActivityStatus = 'planned' | 'done' | 'cancelled'
 export type IntegrationProvider = 'google' | 'mailchimp' | 'stripe' | 'calendly'
-export type ContactSource = 'manual' | 'mailchimp' | 'stripe' | 'calendly' | 'import'
+export type ContactSource = 'manual' | 'mailchimp' | 'stripe' | 'calendly' | 'import' | 'flintt'
 
 export interface Organization {
   id: string
