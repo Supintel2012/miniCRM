@@ -25,6 +25,20 @@ export async function GET(request: NextRequest) {
     )
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
+      // Check if the user has a profile (Google OAuth users won't on first login)
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id, org_id')
+          .eq('id', user.id)
+          .single()
+
+        // No profile or no org → redirect to onboarding
+        if (!profile || !profile.org_id) {
+          return NextResponse.redirect(`${origin}/onboarding`)
+        }
+      }
       return NextResponse.redirect(`${origin}${next}`)
     }
   }
