@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (orgError || !org) {
-    return NextResponse.json({ error: { code: 'ORG_ERROR', message: 'Failed to create organization' } }, { status: 500 })
+    return NextResponse.json({ error: { code: 'ORG_ERROR', message: 'Failed to create organization', detail: orgError?.message } }, { status: 500 })
   }
 
   // Create or update profile
