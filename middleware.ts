@@ -40,11 +40,13 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Public routes that don't require auth
-  const publicPaths = ['/login', '/register', '/auth/callback', '/demo']
+  const publicPaths = ['/login', '/register', '/onboarding', '/auth/callback', '/demo']
   const isPublicPath = publicPaths.some(p => pathname.startsWith(p))
 
-  // Webhook and MCP routes bypass auth (they have their own auth)
-  const isBypassPath = pathname.startsWith('/api/integrations') && pathname.includes('/webhook') ||
+  // API auth routes (register, complete-onboarding) and webhooks bypass middleware auth
+  const isBypassPath =
+    pathname.startsWith('/api/auth/') ||
+    (pathname.startsWith('/api/integrations') && pathname.includes('/webhook')) ||
     pathname === '/api/mcp'
 
   if (!user && !isPublicPath && !isBypassPath) {
@@ -53,6 +55,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  // Logged-in users hitting login/register go to dashboard (but NOT /onboarding —
+  // they may need to complete onboarding even with a valid session)
   if (user && (pathname === '/login' || pathname === '/register')) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
