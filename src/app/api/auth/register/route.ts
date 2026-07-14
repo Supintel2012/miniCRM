@@ -58,21 +58,32 @@ export async function POST(request: NextRequest) {
 
   if (orgError || !org) {
     await adminSupabase.auth.admin.deleteUser(userId)
-    return NextResponse.json({ error: { code: 'ORG_ERROR', message: 'Failed to create organization' } }, { status: 500 })
+    return NextResponse.json({ error: { code: 'ORG_ERROR', message: 'Failed to create organization', detail: orgError?.message } }, { status: 500 })
   }
 
   // Create profile
-  await adminSupabase.from('profiles').insert({
+  const { error: profileError } = await adminSupabase.from('profiles').insert({
     id: userId,
     org_id: org.id,
     full_name,
     role: 'owner',
   })
+  if (profileError) {
+    await adminSupabase.auth.admin.deleteUser(userId)
+    await adminSupabase.from('crm.organizations').delete().eq('id', org.id)
+    return NextResponse.json({ error: { code: 'PROFILE_ERROR', message: 'Failed to create profile', detail: profileError.message } }, { status: 500 })
+  }
 
   // Create default pipeline stages
-  await adminSupabase.from('crm.pipeline_stages').insert(
+  const { error: stagesError } = await adminSupabase.from('crm.pipeline_stages').insert(
     DEFAULT_STAGES.map(s => ({ ...s, org_id: org.id }))
   )
+  if (stagesError) {
+    await adminSupabase.auth.admin.deleteUser(userId)
+    await adminSupabase.from('crm.organizations').delete().eq('id', org.id)
+    await adminSupabase.from('profiles').delete().eq('id', userId)
+    return NextResponse.json({ error: { code: 'STAGES_ERROR', message: 'Failed to create pipeline stages', detail: stagesError.message } }, { status: 500 })
+  }
 
   // Sign in user to create session
   const userSupabase = createServerClient(
