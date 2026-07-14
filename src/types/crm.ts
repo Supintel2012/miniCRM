@@ -176,6 +176,55 @@ export interface McpApiKey {
   created_at: string
 }
 
+// ── RR Toolbox integration ────────────────────────────────────────────────
+export interface RrtModelInfo {
+  name: string
+  endpoint: string
+  description: string
+}
+
+export interface RrtModelCard {
+  model_name: string
+  purpose: string
+  who_should_use: string
+  example_question: string
+  inputs: Record<string, unknown>
+  common_mistakes: string[]
+  worked_example: string
+}
+
+export interface RrtRunResult {
+  summary: string
+  recommended_action: string
+  key_drivers: string[]
+  warnings: string[]
+  validation: { ok: boolean; issues?: unknown[] }
+  attribution: string
+  raw: Record<string, unknown>
+}
+
+export interface RrtModelRun {
+  id: string
+  model_name: string
+  deal_id: string | null
+  contact_id: string | null
+  summary: string | null
+  recommended_action: string | null
+  key_drivers: string[] | null
+  warnings: string[] | null
+  attribution: string | null
+  success: boolean
+  error_message: string | null
+  duration_ms: number | null
+  created_at: string
+}
+
+export interface RrtConfigStatus {
+  configured: boolean
+  base_url: string | null
+  has_api_key: boolean
+}
+
 export interface DashboardMetrics {
   total_contacts: number
   new_contacts_30d: number

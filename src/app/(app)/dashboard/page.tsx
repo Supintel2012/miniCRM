@@ -35,28 +35,28 @@ export default async function DashboardPage() {
           value={metrics?.total_contacts ?? 0}
           sub={`+${metrics?.new_contacts_30d ?? 0} this month`}
           icon={Users}
-          color="indigo"
+          accent="neutral"
         />
         <DashboardMetricCard
           title="Active Deals"
           value={metrics?.total_deals ?? 0}
           sub="in pipeline"
           icon={TrendingUp}
-          color="violet"
+          accent="neutral"
         />
         <DashboardMetricCard
           title="Pipeline Value"
           value={`$${((metrics?.total_pipeline_value ?? 0) / 1000).toFixed(1)}k`}
           sub={`$${((metrics?.won_value_30d ?? 0) / 1000).toFixed(1)}k won this month`}
           icon={DollarSign}
-          color="emerald"
+          accent="primary"
         />
         <DashboardMetricCard
           title="Due Today"
           value={metrics?.activities_due_today ?? 0}
           sub="activities"
           icon={CalendarCheck}
-          color="amber"
+          accent="neutral"
         />
       </div>
 

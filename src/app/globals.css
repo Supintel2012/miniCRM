@@ -15,11 +15,11 @@
 
 @theme inline {
   --font-heading:
-    var(--font-jakarta);
+    var(--font-sans);
   --font-sans:
-    var(--font-jakarta);
+    var(--font-sans);
   --font-mono:
-    var(--font-jetbrains-mono);
+    var(--font-mono);
   --color-sidebar-ring:
     var(--sidebar-ring);
   --color-sidebar-border:
@@ -245,6 +245,9 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
   }
 }

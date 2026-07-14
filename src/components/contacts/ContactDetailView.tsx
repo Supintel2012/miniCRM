@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { NotesSection } from '@/components/shared/NotesSection'
 import { ActivitiesSection } from '@/components/shared/ActivitiesSection'
+import { RrtModelRunner } from '@/components/shared/RrtModelRunner'
 import type { Contact, Activity, Note } from '@/types/crm'
 
 interface ContactDetailViewProps {
@@ -235,12 +236,16 @@ export function ContactDetailView({ contact: initial, companies }: ContactDetail
             <TabsList className="mb-4">
               <TabsTrigger value="activities">Activities {contact.activities && contact.activities.length > 0 ? `(${contact.activities.length})` : ''}</TabsTrigger>
               <TabsTrigger value="notes">Notes {contact.notes && contact.notes.length > 0 ? `(${contact.notes.length})` : ''}</TabsTrigger>
+              <TabsTrigger value="models">Decision Models</TabsTrigger>
             </TabsList>
             <TabsContent value="activities">
               <ActivitiesSection initialActivities={contact.activities ?? []} contactId={contact.id} />
             </TabsContent>
             <TabsContent value="notes">
               <NotesSection initialNotes={contact.notes ?? []} contactId={contact.id} />
+            </TabsContent>
+            <TabsContent value="models">
+              <RrtModelRunner entityType="contact" entityId={contact.id} />
             </TabsContent>
           </Tabs>
         </div>

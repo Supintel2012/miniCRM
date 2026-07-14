@@ -2,13 +2,18 @@ import { Card, CardContent } from '@/components/ui/card'
 import { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-// Metric accent slots mapped onto the SI brand ramp (theme-aware chart tokens).
-// Key names are opaque slots kept stable for existing call sites.
-const colorMap = {
-  indigo: 'bg-[var(--chart-2)]/15 text-[var(--chart-2)]', // sky
-  violet: 'bg-[var(--chart-3)]/15 text-[var(--chart-3)]', // navy
-  emerald: 'bg-primary/10 text-primary', // coral (hero)
-  amber: 'bg-[var(--chart-4)]/15 text-[var(--chart-4)]', // slate
+// SI design system accent treatments.
+// "primary" → coral top-border accent (the highlighted metric, e.g. Pipeline Value)
+// "neutral" → subtle slate icon chip (default for supporting metrics)
+const accentMap = {
+  primary: {
+    card: 'border-t-2 border-t-primary',
+    icon: 'bg-primary/10 text-primary',
+  },
+  neutral: {
+    card: '',
+    icon: 'bg-muted text-muted-foreground',
+  },
 }
 
 interface MetricCardProps {
@@ -16,12 +21,16 @@ interface MetricCardProps {
   value: string | number
   sub: string
   icon: LucideIcon
-  color: keyof typeof colorMap
+  /** SI design accent — "primary" gets the coral top-border, "neutral" is the default. */
+  accent?: keyof typeof accentMap
+  /** Legacy prop name kept for callers that still pass `color`. Maps to accent. */
+  color?: keyof typeof accentMap
 }
 
-export function DashboardMetricCard({ title, value, sub, icon: Icon, color }: MetricCardProps) {
+export function DashboardMetricCard({ title, value, sub, icon: Icon, accent, color }: MetricCardProps) {
+  const a = accent ?? color ?? 'neutral'
   return (
-    <Card>
+    <Card className={cn(accentMap[a].card)}>
       <CardContent className="p-5">
         <div className="flex items-start justify-between">
           <div>
@@ -29,7 +38,7 @@ export function DashboardMetricCard({ title, value, sub, icon: Icon, color }: Me
             <p className="text-2xl font-bold text-foreground mt-1">{value}</p>
             <p className="text-xs text-muted-foreground mt-1">{sub}</p>
           </div>
-          <div className={cn('p-2 rounded-lg', colorMap[color])}>
+          <div className={cn('p-2 rounded-lg', accentMap[a].icon)}>
             <Icon size={18} />
           </div>
         </div>

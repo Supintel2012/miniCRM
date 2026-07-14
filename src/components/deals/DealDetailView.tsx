@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { NotesSection } from '@/components/shared/NotesSection'
 import { ActivitiesSection } from '@/components/shared/ActivitiesSection'
+import { RrtModelRunner } from '@/components/shared/RrtModelRunner'
 import type { Deal, PipelineStage, Activity, Note } from '@/types/crm'
 
 interface DealDetailViewProps {
@@ -263,12 +264,16 @@ export function DealDetailView({ deal: initial, stages, contacts, companies }: D
             <TabsList className="mb-4">
               <TabsTrigger value="activities">Activities {deal.activities?.length ? `(${deal.activities.length})` : ''}</TabsTrigger>
               <TabsTrigger value="notes">Notes {deal.notes?.length ? `(${deal.notes.length})` : ''}</TabsTrigger>
+              <TabsTrigger value="models">Decision Models</TabsTrigger>
             </TabsList>
             <TabsContent value="activities">
               <ActivitiesSection initialActivities={deal.activities ?? []} dealId={deal.id} />
             </TabsContent>
             <TabsContent value="notes">
               <NotesSection initialNotes={deal.notes ?? []} dealId={deal.id} />
+            </TabsContent>
+            <TabsContent value="models">
+              <RrtModelRunner entityType="deal" entityId={deal.id} />
             </TabsContent>
           </Tabs>
         </div>
