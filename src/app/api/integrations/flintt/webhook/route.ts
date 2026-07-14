@@ -41,11 +41,22 @@ export async function POST(request: NextRequest) {
   const orgId = request.nextUrl.searchParams.get('org_id')
   if (!orgId) return NextResponse.json({ error: 'Missing org_id' }, { status: 400 })
 
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader?.startsWith('Bearer ')) {
-    return NextResponse.json({ error: 'Missing Authorization header' }, { status: 401 })
+  // Accept token from multiple sources: Authorization: Bearer, X-Api-Key,
+  // x-webhook-token, or query param 'token'
+  const authHeader = request.headers.get('authorization') || ''
+  const receivedToken =
+    authHeader.startsWith('Bearer ') ? authHeader.slice(7) :
+    request.headers.get('x-api-key') ||
+    request.headers.get('x-webhook-token') ||
+    request.nextUrl.searchParams.get('token') ||
+    ''
+
+  if (!receivedToken) {
+    // Log all headers to help debug what Sellable is sending
+    const headerObj: Record<string, string> = {}
+    request.headers.forEach((value, key) => { headerObj[key] = key.toLowerCase().startsWith('authorization') ? value.slice(0, 20) + '...' : value })
+    return NextResponse.json({ error: 'Missing auth token', headers: headerObj }, { status: 401 })
   }
-  const receivedToken = authHeader.slice(7)
 
   // Look up the stored webhook token for this org
   const supabase = createClient(
@@ -62,7 +73,7 @@ export async function POST(request: NextRequest) {
 
   const storedToken = (cred?.config as Record<string, string> | null)?.webhook_token
   if (!storedToken || storedToken !== receivedToken) {
-    return NextResponse.json({ error: 'Invalid webhook token' }, { status: 401 })
+    return NextResponse.json({ error: 'Invalid webhook token', received: receivedToken.slice(0, 10) + '...' }, { status: 401 })
   }
 
   // Parse the event payload
