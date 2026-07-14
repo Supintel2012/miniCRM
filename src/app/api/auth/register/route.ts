@@ -61,17 +61,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: { code: 'ORG_ERROR', message: 'Failed to create organization', detail: orgError?.message } }, { status: 500 })
   }
 
-  // Create profile
-  const { error: profileError } = await adminSupabase.from('profiles').insert({
-    id: userId,
+  // Update profile (the on_auth_user_created trigger already created a bare
+  // profile row with role='admin' and no org_id — update it with org + owner role)
+  const { error: profileError } = await adminSupabase.from('profiles').update({
     org_id: org.id,
     full_name,
     role: 'owner',
-  })
+  }).eq('id', userId)
   if (profileError) {
     await adminSupabase.auth.admin.deleteUser(userId)
     await adminSupabase.from('organizations').delete().eq('id', org.id)
-    return NextResponse.json({ error: { code: 'PROFILE_ERROR', message: 'Failed to create profile', detail: profileError.message } }, { status: 500 })
+    return NextResponse.json({ error: { code: 'PROFILE_ERROR', message: 'Failed to update profile', detail: profileError.message } }, { status: 500 })
   }
 
   // Create default pipeline stages
