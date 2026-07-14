@@ -1,24 +1,67 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import crypto from 'crypto'
 
 /**
- * Flintt (app.sellable.dev) outbound webhook receiver.
+ * Sellable (app.sellable.dev) webhook receiver.
  *
- * Flintt sends POST requests with an Authorization: Bearer <token> header.
- * The token is set when the webhook endpoint is created in Flintt and stored
- * per-org in integration_credentials (provider='flintt', config.webhook_token).
+ * Sellable sends POST requests with an HMAC signature in the
+ * x-sellable-signature header (format: v0=<hex>) and a timestamp in
+ * x-sellable-timestamp. The webhook secret (whsec_live_...) is stored
+ * per-org in integration_credentials (provider='sellable', config.webhook_secret).
  *
  * Webhook URL: https://<your-domain>/api/integrations/flintt/webhook?org_id=<org_id>
  *
+ * The signature is computed as: HMAC-SHA256(secret, timestamp + '.' + rawBody)
+ *
  * Event types handled:
- *   prospect.created  → creates a contact (source='flintt')
- *   company.created   → creates a company
- *   signal.run.*      → logged as an activity on the matched contact/company
+ *   prospect_reply.test / prospect_reply.*  → creates/updates contact + logs activity
+ *   prospect.created                        → creates a contact
+ *   company.created                         → creates a company
+ *   signal.run.*                            → logged as an activity
  */
 
-interface FlinttEvent {
+interface SellableEvent {
   event_type?: string
   type?: string
+  test?: boolean
+  event_id?: string
+  timestamp?: string
+  api_version?: string
+  workspace_id?: string
+  // Prospect data (Sellable format — flat, not nested in data)
+  prospect?: {
+    email?: string
+    first_name?: string
+    last_name?: string
+    title?: string
+    company?: string
+    linkedin_url?: string
+    linkedin_provider_id?: string
+    [key: string]: unknown
+  }
+  sender?: {
+    id?: string
+    name?: string
+    linkedin_url?: string
+  }
+  campaign?: {
+    id?: string
+    name?: string
+  }
+  thread?: {
+    id?: string | null
+    url?: string | null
+    messages?: Array<{
+      id?: string
+      body?: string
+      subject?: string | null
+      direction?: string
+      timestamp?: string
+      provider_message_id?: string
+    }>
+  }
+  // Legacy Flintt format (nested data object)
   data?: {
     id?: string
     name?: string
@@ -41,24 +84,18 @@ export async function POST(request: NextRequest) {
   const orgId = request.nextUrl.searchParams.get('org_id')
   if (!orgId) return NextResponse.json({ error: 'Missing org_id' }, { status: 400 })
 
-  // Accept token from multiple sources: Authorization: Bearer, X-Api-Key,
-  // x-webhook-token, or query param 'token'
+  // Get raw body for signature verification
+  const rawBody = await request.text()
+
+  // Get Sellable signature headers
+  const signatureHeader = request.headers.get('x-sellable-signature') || ''
+  const timestampHeader = request.headers.get('x-sellable-timestamp') || ''
+
+  // Also check for Bearer token (legacy/alternative auth)
   const authHeader = request.headers.get('authorization') || ''
-  const receivedToken =
-    authHeader.startsWith('Bearer ') ? authHeader.slice(7) :
-    request.headers.get('x-api-key') ||
-    request.headers.get('x-webhook-token') ||
-    request.nextUrl.searchParams.get('token') ||
-    ''
+  const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : ''
 
-  if (!receivedToken) {
-    // Log all headers to help debug what Sellable is sending
-    const headerObj: Record<string, string> = {}
-    request.headers.forEach((value, key) => { headerObj[key] = key.toLowerCase().startsWith('authorization') ? value.slice(0, 20) + '...' : value })
-    return NextResponse.json({ error: 'Missing auth token', headers: headerObj }, { status: 401 })
-  }
-
-  // Look up the stored webhook token for this org
+  // Look up the stored webhook secret for this org
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -71,134 +108,207 @@ export async function POST(request: NextRequest) {
     .eq('provider', 'flintt')
     .single()
 
-  const storedToken = (cred?.config as Record<string, string> | null)?.webhook_token
-  if (!storedToken || storedToken !== receivedToken) {
-    return NextResponse.json({ error: 'Invalid webhook token', received: receivedToken.slice(0, 10) + '...' }, { status: 401 })
+  const storedSecret = (cred?.config as Record<string, string> | null)?.webhook_token
+  if (!storedSecret) {
+    return NextResponse.json({ error: 'No webhook secret configured' }, { status: 401 })
+  }
+
+  // Verify authentication — either HMAC signature or Bearer token
+  if (signatureHeader && timestampHeader) {
+    // Sellable HMAC signature verification
+    const sigMatch = signatureHeader.match(/^v0=(.+)$/)
+    if (!sigMatch) {
+      return NextResponse.json({ error: 'Invalid signature format' }, { status: 401 })
+    }
+    const expectedSig = crypto
+      .createHmac('sha256', storedSecret)
+      .update(`${timestampHeader}.${rawBody}`)
+      .digest('hex')
+    if (!crypto.timingSafeEqual(Buffer.from(expectedSig), Buffer.from(sigMatch[1]))) {
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+    }
+  } else if (bearerToken) {
+    // Legacy Bearer token auth
+    if (bearerToken !== storedSecret) {
+      return NextResponse.json({ error: 'Invalid webhook token' }, { status: 401 })
+    }
+  } else {
+    return NextResponse.json({ error: 'Missing authentication' }, { status: 401 })
   }
 
   // Parse the event payload
-  let event: FlinttEvent
+  let event: SellableEvent
   try {
-    event = await request.json()
+    event = JSON.parse(rawBody)
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
   const eventType = event.event_type ?? event.type ?? 'unknown'
-  const data = event.data ?? {}
 
-  switch (eventType) {
-    case 'prospect.created': {
-      if (!data.name) break
-      const [firstName, ...rest] = data.name.split(' ')
-      const lastName = rest.join(' ') || null
+  // Extract prospect data — Sellable sends it flat at top level
+  const prospect = event.prospect
+  // Legacy format: data is nested
+  const legacyData = event.data
 
-      // Check for existing contact by email (if available) to avoid duplicates
-      if (data.email) {
-        const { data: existing } = await supabase
-          .from('contacts')
-          .select('id')
-          .eq('org_id', orgId)
-          .eq('email', data.email)
-          .maybeSingle()
-        if (existing) {
-          // Update existing contact
-          const { error: updateError } = await supabase.from('contacts').update({
-            first_name: firstName,
-            last_name: lastName,
-            job_title: data.title ?? null,
-            source: 'flintt',
-            external_ids: data.id ? { flintt_prospect_id: data.id } : {},
-            custom_fields: data.linkedin_url ? { linkedin_url: data.linkedin_url } : {},
-          }).eq('id', existing.id)
-          if (updateError) {
-            return NextResponse.json({ error: 'Failed to update contact', detail: updateError.message }, { status: 500 })
-          }
-          break
-        }
+  // Handle all prospect-related events
+  const isProspectEvent =
+    eventType.startsWith('prospect') ||
+    eventType === 'prospect.created' ||
+    !!prospect
+
+  if (isProspectEvent && prospect) {
+    const firstName = prospect.first_name || null
+    const lastName = prospect.last_name || null
+    const email = prospect.email ?? null
+    const jobTitle = prospect.title ?? null
+    const companyName = prospect.company ?? null
+    const linkedinUrl = prospect.linkedin_url ?? null
+
+    // Check for existing contact by email
+    let existingContact: { id: string } | null = null
+    if (email) {
+      const { data: existing } = await supabase
+        .from('contacts')
+        .select('id')
+        .eq('org_id', orgId)
+        .eq('email', email)
+        .maybeSingle()
+      existingContact = existing
+    }
+
+    if (existingContact) {
+      // Update existing contact
+      const { error: updateError } = await supabase.from('contacts').update({
+        first_name: firstName,
+        last_name: lastName,
+        job_title: jobTitle,
+        source: 'sellable',
+        custom_fields: linkedinUrl ? { linkedin_url: linkedinUrl } : {},
+      }).eq('id', existingContact.id)
+      if (updateError) {
+        return NextResponse.json({ error: 'Failed to update contact', detail: updateError.message }, { status: 500 })
       }
-
+    } else {
+      // Create new contact
       const { error: contactError } = await supabase.from('contacts').insert({
         org_id: orgId,
         first_name: firstName,
         last_name: lastName,
-        email: data.email ?? null,
-        job_title: data.title ?? null,
-        source: 'flintt',
-        external_ids: data.id ? { flintt_prospect_id: data.id } : {},
-        custom_fields: data.linkedin_url ? { linkedin_url: data.linkedin_url } : {},
+        email,
+        job_title: jobTitle,
+        source: 'sellable',
+        custom_fields: linkedinUrl ? { linkedin_url: linkedinUrl } : {},
       })
       if (contactError) {
         return NextResponse.json({ error: 'Failed to create contact', detail: contactError.message }, { status: 500 })
       }
-      break
     }
 
-    case 'company.created': {
-      if (!data.name) break
-      // Check for existing company by name to avoid duplicates
+    // If there's a company name, create/link the company
+    if (companyName) {
       const { data: existingCo } = await supabase
         .from('companies')
         .select('id')
         .eq('org_id', orgId)
-        .eq('name', data.name)
+        .eq('name', companyName)
         .maybeSingle()
-      if (existingCo) {
-        const { error: updateError } = await supabase.from('companies').update({
-          domain: data.domain ?? null,
-          external_ids: data.id ? { flintt_company_id: data.id } : {},
-          custom_fields: data.linkedin_url ? { linkedin_url: data.linkedin_url } : {},
-        }).eq('id', existingCo.id)
-        if (updateError) {
-          return NextResponse.json({ error: 'Failed to update company', detail: updateError.message }, { status: 500 })
+
+      if (!existingCo) {
+        await supabase.from('companies').insert({
+          org_id: orgId,
+          name: companyName,
+        })
+      }
+    }
+
+    // Log the event as an activity
+    if (event.thread?.messages?.length) {
+      const msg = event.thread.messages[0]
+      const { data: contactForActivity } = email ? await supabase
+        .from('contacts')
+        .select('id')
+        .eq('org_id', orgId)
+        .eq('email', email)
+        .maybeSingle() : { data: null }
+
+      if (contactForActivity) {
+        await supabase.from('activities').insert({
+          org_id: orgId,
+          type: msg.direction === 'inbound' ? 'email_received' : 'email_sent',
+          subject: `Sellable: ${eventType}`,
+          description: msg.body?.slice(0, 2000) || '',
+          status: 'done',
+          done_at: msg.timestamp || new Date().toISOString(),
+          contact_id: contactForActivity.id,
+          external_ids: event.event_id ? { sellable_event_id: event.event_id } : {},
+        })
+      }
+    }
+
+    return NextResponse.json({ received: true, event_type: eventType })
+  }
+
+  // Legacy Flintt format (nested data)
+  if (legacyData) {
+    switch (eventType) {
+      case 'prospect.created': {
+        if (!legacyData.name) break
+        const [firstName, ...rest] = legacyData.name.split(' ')
+        const lastName = rest.join(' ') || null
+
+        if (legacyData.email) {
+          const { data: existing } = await supabase
+            .from('contacts')
+            .select('id')
+            .eq('org_id', orgId)
+            .eq('email', legacyData.email)
+            .maybeSingle()
+          if (existing) {
+            await supabase.from('contacts').update({
+              first_name: firstName,
+              last_name: lastName,
+              job_title: legacyData.title ?? null,
+              source: 'sellable',
+              custom_fields: legacyData.linkedin_url ? { linkedin_url: legacyData.linkedin_url } : {},
+            }).eq('id', existing.id)
+            break
+          }
         }
+
+        await supabase.from('contacts').insert({
+          org_id: orgId,
+          first_name: firstName,
+          last_name: lastName,
+          email: legacyData.email ?? null,
+          job_title: legacyData.title ?? null,
+          source: 'sellable',
+          external_ids: legacyData.id ? { sellable_prospect_id: legacyData.id } : {},
+          custom_fields: legacyData.linkedin_url ? { linkedin_url: legacyData.linkedin_url } : {},
+        })
         break
       }
 
-      const { error: companyError } = await supabase.from('companies').insert({
-        org_id: orgId,
-        name: data.name,
-        domain: data.domain ?? null,
-        external_ids: data.id ? { flintt_company_id: data.id } : {},
-        custom_fields: data.linkedin_url ? { linkedin_url: data.linkedin_url } : {},
-      })
-      if (companyError) {
-        return NextResponse.json({ error: 'Failed to create company', detail: companyError.message }, { status: 500 })
-      }
-      break
-    }
-
-    case 'signal.run.completed':
-    case 'signal.run.result': {
-      // Log signal run results as an activity on the matched contact (by email)
-      if (data.email) {
-        const { data: contact } = await supabase
-          .from('contacts')
+      case 'company.created': {
+        if (!legacyData.name) break
+        const { data: existingCo } = await supabase
+          .from('companies')
           .select('id')
           .eq('org_id', orgId)
-          .eq('email', data.email)
+          .eq('name', legacyData.name)
           .maybeSingle()
-
-        if (contact) {
-          await supabase.from('activities').insert({
+        if (!existingCo) {
+          await supabase.from('companies').insert({
             org_id: orgId,
-            type: 'task',
-            subject: `Flintt signal: ${eventType}`,
-            description: JSON.stringify(data).slice(0, 2000),
-            status: 'done',
-            done_at: new Date().toISOString(),
-            contact_id: contact.id,
-            external_ids: data.id ? { flintt_signal_id: data.id } : {},
+            name: legacyData.name,
+            domain: legacyData.domain ?? null,
+            external_ids: legacyData.id ? { sellable_company_id: legacyData.id } : {},
           })
         }
+        break
       }
-      break
     }
-
-    default:
-      // Unknown event type — acknowledge but don't process
-      break
   }
 
-  return NextResponse.json({ received: true })
+  return NextResponse.json({ received: true, event_type: eventType })
 }
