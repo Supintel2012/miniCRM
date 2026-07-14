@@ -1,7 +1,12 @@
 -- Helper required by RLS policies (0002); defined here so order is safe
+-- Looks up org_id from profiles table (not JWT, since org_id is not in JWT claims)
 CREATE OR REPLACE FUNCTION public.get_org_id()
-RETURNS UUID LANGUAGE sql STABLE SECURITY DEFINER AS $$
-  SELECT (auth.jwt()->>'org_id')::UUID;
+RETURNS UUID LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public AS $$
+DECLARE v_org_id UUID;
+BEGIN
+  SELECT p.org_id INTO v_org_id FROM public.profiles p WHERE p.id = auth.uid();
+  RETURN v_org_id;
+END;
 $$;
 
 -- Organizations (tenants)

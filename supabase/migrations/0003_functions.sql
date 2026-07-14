@@ -1,8 +1,13 @@
--- Helper: get current org_id from JWT claim (also created here for idempotency;
+-- Helper: get current org_id from profiles table (also created here for idempotency;
 -- RLS policies in 0002 depend on this function, so run this block first if needed)
+-- Note: org_id is NOT in JWT claims — it's stored in public.profiles
 CREATE OR REPLACE FUNCTION public.get_org_id()
-RETURNS UUID LANGUAGE sql STABLE SECURITY DEFINER AS $$
-  SELECT (auth.jwt()->>'org_id')::UUID;
+RETURNS UUID LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public AS $$
+DECLARE v_org_id UUID;
+BEGIN
+  SELECT p.org_id INTO v_org_id FROM public.profiles p WHERE p.id = auth.uid();
+  RETURN v_org_id;
+END;
 $$;
 
 -- Hook: inject org_id into JWT after login

@@ -65,11 +65,20 @@ ALTER ROLE service_role SET search_path TO crm, public;
 
 -- Update get_dashboard_metrics to use crm-qualified table refs
 -- (SECURITY DEFINER functions need explicit schema qualification)
+-- Uses a CTE for stage stats to avoid nesting aggregate functions.
 CREATE OR REPLACE FUNCTION public.get_dashboard_metrics(p_org_id UUID)
 RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = crm, public AS $$
 DECLARE
   result JSONB;
 BEGIN
+  WITH stage_stats AS (
+    SELECT s.id, s.name, s.color, s.position,
+      COUNT(d.id) as deal_count, COALESCE(SUM(d.value), 0) as total_value
+    FROM crm.pipeline_stages s
+    LEFT JOIN crm.deals d ON d.stage_id = s.id AND d.org_id = p_org_id
+    WHERE s.org_id = p_org_id
+    GROUP BY s.id, s.name, s.color, s.position
+  )
   SELECT jsonb_build_object(
     'total_contacts', (SELECT COUNT(*) FROM crm.contacts WHERE org_id = p_org_id),
     'new_contacts_30d', (SELECT COUNT(*) FROM crm.contacts WHERE org_id = p_org_id AND created_at > now() - interval '30 days'),
@@ -84,14 +93,10 @@ BEGIN
       WHERE org_id = p_org_id AND status = 'planned' AND due_at::date = CURRENT_DATE),
     'deals_by_stage', (
       SELECT jsonb_agg(jsonb_build_object(
-        'stage_id', s.id, 'name', s.name, 'color', s.color,
-        'count', COUNT(d.id), 'value', COALESCE(SUM(d.value), 0)
-      ))
-      FROM crm.pipeline_stages s
-      LEFT JOIN crm.deals d ON d.stage_id = s.id
-      WHERE s.org_id = p_org_id
-      GROUP BY s.id, s.name, s.color, s.position
-      ORDER BY s.position
+        'stage_id', id, 'name', name, 'color', color,
+        'count', deal_count, 'value', total_value
+      ) ORDER BY position)
+      FROM stage_stats
     )
   ) INTO result;
   RETURN result;
