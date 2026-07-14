@@ -9,7 +9,7 @@ export default async function ImportPage() {
 
   // Check which integrations are connected
   const { data: tokens } = await supabase
-    .from('crm.integration_tokens')
+    .from('integration_tokens')
     .select('provider,enabled,metadata')
     .in('provider', ['google', 'mailchimp', 'hubspot'])
 

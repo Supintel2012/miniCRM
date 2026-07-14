@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
   const company_id = searchParams.get('company_id')
 
   let query = auth.supabase
-    .from('crm.notes')
+    .from('notes')
     .select('*, author:profiles(id,full_name)')
     .order('created_at', { ascending: false })
 
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
   if (!profile) return unauthorized()
 
   const { data, error } = await supabase
-    .from('crm.notes')
+    .from('notes')
     .insert({ ...parsed.data, org_id: profile.org_id, author_id: user.id })
     .select('*, author:profiles(id,full_name)')
     .single()

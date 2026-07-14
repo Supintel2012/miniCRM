@@ -1,0 +1,26 @@
+project_id = "uzhtfshulwksithxgnza"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public", "crm", "cms", "core", "housing", "extensions"]
+extra_search_path = ["public", "extensions"]
+max_rows = 5000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[auth]
+enabled = true
+site_url = "https://minicrm-demo.vercel.app"
+additional_redirect_urls = [
+  "https://minicrm-demo.vercel.app/auth/callback",
+  "http://localhost:3000/auth/callback"
+]
+
+[auth.external.google]
+enabled = true
+client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"

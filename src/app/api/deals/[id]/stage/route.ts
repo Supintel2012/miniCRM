@@ -12,7 +12,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   if (!parsed.success) return badRequest('stage_id is required')
 
   const { data, error } = await auth.supabase
-    .from('crm.deals')
+    .from('deals')
     .update({ stage_id: parsed.data.stage_id })
     .eq('id', id)
     .select('*, stage:pipeline_stages(id,name,color)')

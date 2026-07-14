@@ -10,7 +10,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
 
   const [dealRes, stagesRes, contactsRes, companiesRes] = await Promise.all([
     supabase
-      .from('crm.deals')
+      .from('deals')
       .select(`
         *,
         stage:pipeline_stages(*),
@@ -22,9 +22,9 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
       `)
       .eq('id', id)
       .single(),
-    supabase.from('crm.pipeline_stages').select('*').order('position'),
-    supabase.from('crm.contacts').select('id,first_name,last_name').order('first_name'),
-    supabase.from('crm.companies').select('id,name').order('name'),
+    supabase.from('pipeline_stages').select('*').order('position'),
+    supabase.from('contacts').select('id,first_name,last_name').order('first_name'),
+    supabase.from('companies').select('id,name').order('name'),
   ])
 
   if (!dealRes.data) notFound()

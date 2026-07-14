@@ -9,7 +9,7 @@ export async function POST() {
   const { data: profile } = await supabase.from('profiles').select('org_id').eq('id', user.id).single()
   if (!profile) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data: token } = await supabase.from('crm.integration_tokens')
+  const { data: token } = await supabase.from('integration_tokens')
     .select('*').eq('org_id', profile.org_id).eq('provider', 'calendly').single()
 
   if (!token?.access_token) return NextResponse.json({ error: 'Calendly not connected' }, { status: 400 })
@@ -29,7 +29,7 @@ export async function POST() {
 
         for (const invitee of invitees) {
           // Dedup contact by email
-          const { data: existing } = await supabase.from('crm.contacts')
+          const { data: existing } = await supabase.from('contacts')
             .select('id')
             .eq('org_id', orgId)
             .eq('email', invitee.email)
@@ -38,7 +38,7 @@ export async function POST() {
           let contactId: string | null = existing?.id ?? null
 
           if (!contactId) {
-            const { data: created } = await supabase.from('crm.contacts').insert({
+            const { data: created } = await supabase.from('contacts').insert({
               org_id: orgId,
               first_name: invitee.name?.split(' ')[0] ?? invitee.email.split('@')[0],
               last_name: invitee.name?.split(' ').slice(1).join(' ') || null,
@@ -49,14 +49,14 @@ export async function POST() {
           }
 
           // Dedup activity by calendly event URI + contact
-          const { data: existingActivity } = await supabase.from('crm.activities')
+          const { data: existingActivity } = await supabase.from('activities')
             .select('id')
             .eq('org_id', orgId)
             .filter('external_ids', 'cs', JSON.stringify({ calendly_event_id: event.uri }))
             .maybeSingle()
 
           if (!existingActivity) {
-            await supabase.from('crm.activities').insert({
+            await supabase.from('activities').insert({
               org_id: orgId,
               type: 'meeting',
               subject: event.name,

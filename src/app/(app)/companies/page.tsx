@@ -4,7 +4,7 @@ import { CompaniesTable } from '@/components/companies/CompaniesTable'
 export default async function CompaniesPage() {
   const supabase = await createClient()
   const { data: companies } = await supabase
-    .from('crm.companies')
+    .from('companies')
     .select('*')
     .order('name')
     .limit(50)

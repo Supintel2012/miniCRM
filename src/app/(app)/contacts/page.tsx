@@ -4,7 +4,7 @@ import { ContactsTable } from '@/components/contacts/ContactsTable'
 export default async function ContactsPage() {
   const supabase = await createClient()
   const { data: contacts } = await supabase
-    .from('crm.contacts')
+    .from('contacts')
     .select('*, company:companies(id,name), owner:profiles(id,full_name)')
     .order('created_at', { ascending: false })
     .limit(50)

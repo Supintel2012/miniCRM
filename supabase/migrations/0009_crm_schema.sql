@@ -4,8 +4,9 @@
 -- Run this AFTER 0001-0008. On a fresh database, run 0001-0008 first
 -- (which create tables in public), then this migration to move them.
 --
--- The application code references tables as 'crm.<table>' in all
--- .from() calls. profiles is referenced as 'profiles' (no prefix).
+-- The application code references tables as '<table>' (no schema prefix)
+-- in all .from() calls. PostgREST resolves them via views in public schema
+-- that point to the underlying crm tables. profiles is a real table in public.
 
 CREATE SCHEMA IF NOT EXISTS crm;
 
@@ -29,9 +30,32 @@ ALTER TABLE public.profiles ADD CONSTRAINT profiles_org_id_fkey
   FOREIGN KEY (org_id) REFERENCES crm.organizations(id) ON DELETE CASCADE;
 
 -- Grant access to crm schema
-GRANT USAGE ON SCHEMA crm TO anon, authenticated, service_role;
-GRANT ALL ON ALL TABLES IN SCHEMA crm TO anon, authenticated, service_role;
-GRANT ALL ON ALL SEQUENCES IN SCHEMA crm TO anon, authenticated, service_role;
+GRANT USAGE ON SCHEMA crm TO anon, authenticated, service_role, authenticator;
+GRANT ALL ON ALL TABLES IN SCHEMA crm TO anon, authenticated, service_role, authenticator;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA crm TO anon, authenticated, service_role, authenticator;
+
+-- Create views in public schema that point to crm tables.
+-- PostgREST's schema cache includes public but may not pick up crm
+-- without a restart. Views in public are immediately visible and
+-- automatically updatable (single-table, no joins). security_invoker
+-- makes the view respect RLS on the underlying crm table.
+CREATE OR REPLACE VIEW public.organizations WITH (security_invoker = true) AS SELECT * FROM crm.organizations;
+CREATE OR REPLACE VIEW public.companies WITH (security_invoker = true) AS SELECT * FROM crm.companies;
+CREATE OR REPLACE VIEW public.contacts WITH (security_invoker = true) AS SELECT * FROM crm.contacts;
+CREATE OR REPLACE VIEW public.deals WITH (security_invoker = true) AS SELECT * FROM crm.deals;
+CREATE OR REPLACE VIEW public.activities WITH (security_invoker = true) AS SELECT * FROM crm.activities;
+CREATE OR REPLACE VIEW public.notes WITH (security_invoker = true) AS SELECT * FROM crm.notes;
+CREATE OR REPLACE VIEW public.pipeline_stages WITH (security_invoker = true) AS SELECT * FROM crm.pipeline_stages;
+CREATE OR REPLACE VIEW public.integration_credentials WITH (security_invoker = true) AS SELECT * FROM crm.integration_credentials;
+CREATE OR REPLACE VIEW public.integration_tokens WITH (security_invoker = true) AS SELECT * FROM crm.integration_tokens;
+CREATE OR REPLACE VIEW public.mcp_api_keys WITH (security_invoker = true) AS SELECT * FROM crm.mcp_api_keys;
+CREATE OR REPLACE VIEW public.rrt_model_runs WITH (security_invoker = true) AS SELECT * FROM crm.rrt_model_runs;
+CREATE OR REPLACE VIEW public.synced_emails WITH (security_invoker = true) AS SELECT * FROM crm.synced_emails;
+
+GRANT ALL ON public.organizations, public.companies, public.contacts, public.deals,
+  public.activities, public.notes, public.pipeline_stages, public.integration_credentials,
+  public.integration_tokens, public.mcp_api_keys, public.rrt_model_runs, public.synced_emails
+  TO anon, authenticated, service_role;
 
 -- Set search_path so RLS policies (which use unqualified table names)
 -- resolve correctly for anon/authenticated roles.

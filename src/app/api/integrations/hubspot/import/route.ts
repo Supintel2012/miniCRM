@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
   const orgId = profile.org_id
 
   const { data: tokenRow } = await supabase
-    .from('crm.integration_tokens')
+    .from('integration_tokens')
     .select('access_token')
     .eq('org_id', orgId)
     .eq('provider', 'hubspot')
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
 
           // Check if already imported by external_id
           const { data: existing } = await supabase
-            .from('crm.companies')
+            .from('companies')
             .select('id')
             .eq('org_id', orgId)
             .eq("external_ids->>'hubspot'", co.id)
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
           }
 
           const { data: inserted } = await supabase
-            .from('crm.companies')
+            .from('companies')
             .insert({
               org_id: orgId,
               name: p.name,
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
 
           // Check by hubspot external_id first, then by email
           const { data: byExtId } = await supabase
-            .from('crm.contacts')
+            .from('contacts')
             .select('id')
             .eq('org_id', orgId)
             .eq("external_ids->>'hubspot'", c.id)
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
 
           if (p.email) {
             const { data: byEmail } = await supabase
-              .from('crm.contacts')
+              .from('contacts')
               .select('id')
               .eq('org_id', orgId)
               .eq('email', p.email)
@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
 
             if (byEmail) {
               // Update external_id on existing contact
-              await supabase.from('crm.contacts')
+              await supabase.from('contacts')
                 .update({ external_ids: { hubspot: c.id } })
                 .eq('id', byEmail.id)
               contactIdMap[c.id] = byEmail.id
@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
           const tags = p.hs_lead_status ? [p.hs_lead_status.toLowerCase().replace(/_/g, ' ')] : []
 
           const { data: inserted } = await supabase
-            .from('crm.contacts')
+            .from('contacts')
             .insert({
               org_id: orgId,
               first_name: p.firstname ?? p.email?.split('@')[0] ?? 'Unknown',
@@ -161,7 +161,7 @@ export async function POST(request: NextRequest) {
   if (parsed.data.types.includes('deals')) {
     // Get miniCRM stages for name matching
     const { data: stages } = await supabase
-      .from('crm.pipeline_stages')
+      .from('pipeline_stages')
       .select('id,name,is_won,is_lost')
       .eq('org_id', orgId)
       .order('position')
@@ -189,7 +189,7 @@ export async function POST(request: NextRequest) {
             if (!p.dealname) { skipped++; continue }
 
             const { data: existing } = await supabase
-              .from('crm.deals')
+              .from('deals')
               .select('id')
               .eq('org_id', orgId)
               .eq("external_ids->>'hubspot'", d.id)
@@ -201,7 +201,7 @@ export async function POST(request: NextRequest) {
             const assocContactHsId = d.associations?.contacts?.results?.[0]?.id
             const assocCompanyHsId = d.associations?.companies?.results?.[0]?.id
 
-            await supabase.from('crm.deals').insert({
+            await supabase.from('deals').insert({
               org_id: orgId,
               title: p.dealname,
               value: p.amount ? parseFloat(p.amount) : null,

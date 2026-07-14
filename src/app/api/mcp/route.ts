@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
   )
 
   const { data: keys } = await serviceSupabase
-    .from('crm.mcp_api_keys')
+    .from('mcp_api_keys')
     .select('*')
     .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
 
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid API key' }, { status: 401 })
   }
 
-  serviceSupabase.from('crm.mcp_api_keys')
+  serviceSupabase.from('mcp_api_keys')
     .update({ last_used: new Date().toISOString() })
     .eq('id', matchedKey.id)
     .then(() => {})

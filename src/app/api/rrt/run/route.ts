@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
     )
     serviceSupabase
-      .from('crm.rrt_model_runs')
+      .from('rrt_model_runs')
       .insert({
         org_id: profile.org_id,
         user_id: auth.user.id,

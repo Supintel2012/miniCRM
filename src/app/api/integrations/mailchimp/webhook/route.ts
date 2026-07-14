@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
   const supabase = await createClient()
 
   if (type === 'subscribe') {
-    await supabase.from('crm.contacts').upsert({
+    await supabase.from('contacts').upsert({
       org_id: orgId,
       first_name: params.get('data[merges][FNAME]') || email.split('@')[0],
       last_name: params.get('data[merges][LNAME]') || null,

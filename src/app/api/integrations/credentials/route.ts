@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
 
   const supabase = await createClient()
   const { data } = await supabase
-    .from('crm.integration_credentials')
+    .from('integration_credentials')
     .select('config')
     .eq('org_id', auth.orgId)
     .eq('provider', provider)

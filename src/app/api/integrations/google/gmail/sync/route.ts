@@ -60,9 +60,9 @@ export async function POST(request: NextRequest) {
         const threadId = msg.data.threadId ?? ''
 
         // Try to link to a contact
-        const { data: contact } = await supabase.from('crm.contacts').select('id').eq('email', fromEmail).eq('org_id', orgId).maybeSingle()
+        const { data: contact } = await supabase.from('contacts').select('id').eq('email', fromEmail).eq('org_id', orgId).maybeSingle()
 
-        await supabase.from('crm.synced_emails').upsert({
+        await supabase.from('synced_emails').upsert({
           org_id: orgId,
           gmail_id: msgId,
           thread_id: threadId,
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
 
     // Update historyId
     const profile = await gmail.users.getProfile({ userId: 'me' })
-    await supabase.from('crm.integration_tokens').update({
+    await supabase.from('integration_tokens').update({
       metadata: { ...token.metadata as object, gmail_history_id: profile.data.historyId },
     }).eq('org_id', orgId).eq('provider', 'google')
 

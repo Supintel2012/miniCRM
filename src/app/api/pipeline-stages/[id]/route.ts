@@ -20,7 +20,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   if (!parsed.success) return badRequest('Invalid input', parsed.error.flatten())
 
   const { data, error } = await auth.supabase
-    .from('crm.pipeline_stages')
+    .from('pipeline_stages')
     .update(parsed.data)
     .eq('id', id)
     .select('*')
@@ -35,7 +35,7 @@ export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id:
   if (!auth) return unauthorized()
 
   const { id } = await params
-  const { error } = await auth.supabase.from('crm.pipeline_stages').delete().eq('id', id)
+  const { error } = await auth.supabase.from('pipeline_stages').delete().eq('id', id)
   if (error) return serverError(error.message)
   return noContent()
 }

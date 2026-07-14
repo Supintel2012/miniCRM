@@ -16,7 +16,7 @@ export default async function DashboardPage() {
   const { data: metrics } = await supabase.rpc('get_dashboard_metrics', { p_org_id: profile.org_id })
 
   const { data: recentActivities } = await supabase
-    .from('crm.activities')
+    .from('activities')
     .select('*, contact:contacts(id,first_name,last_name), deal:deals(id,title)')
     .order('created_at', { ascending: false })
     .limit(8)

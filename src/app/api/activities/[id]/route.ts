@@ -9,7 +9,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   const body = await request.json()
   const parsed = updateActivitySchema.safeParse(body)
   if (!parsed.success) return badRequest('Invalid input', parsed.error.flatten())
-  const { data, error } = await auth.supabase.from('crm.activities').update(parsed.data).eq('id', id).select('*').single()
+  const { data, error } = await auth.supabase.from('activities').update(parsed.data).eq('id', id).select('*').single()
   if (error) return error.code === 'PGRST116' ? notFound('Activity') : serverError(error.message)
   return ok(data)
 }
@@ -18,7 +18,7 @@ export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id:
   const auth = await getAuthenticatedUser()
   if (!auth) return unauthorized()
   const { id } = await params
-  const { error } = await auth.supabase.from('crm.activities').delete().eq('id', id)
+  const { error } = await auth.supabase.from('activities').delete().eq('id', id)
   if (error) return serverError(error.message)
   return noContent()
 }

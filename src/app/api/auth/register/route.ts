@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
   // Create org
   const slug = org_name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-')
   const { data: org, error: orgError } = await adminSupabase
-    .from('crm.organizations')
+    .from('organizations')
     .insert({ name: org_name, slug: `${slug}-${Date.now()}` })
     .select('id')
     .single()
@@ -70,17 +70,17 @@ export async function POST(request: NextRequest) {
   })
   if (profileError) {
     await adminSupabase.auth.admin.deleteUser(userId)
-    await adminSupabase.from('crm.organizations').delete().eq('id', org.id)
+    await adminSupabase.from('organizations').delete().eq('id', org.id)
     return NextResponse.json({ error: { code: 'PROFILE_ERROR', message: 'Failed to create profile', detail: profileError.message } }, { status: 500 })
   }
 
   // Create default pipeline stages
-  const { error: stagesError } = await adminSupabase.from('crm.pipeline_stages').insert(
+  const { error: stagesError } = await adminSupabase.from('pipeline_stages').insert(
     DEFAULT_STAGES.map(s => ({ ...s, org_id: org.id }))
   )
   if (stagesError) {
     await adminSupabase.auth.admin.deleteUser(userId)
-    await adminSupabase.from('crm.organizations').delete().eq('id', org.id)
+    await adminSupabase.from('organizations').delete().eq('id', org.id)
     await adminSupabase.from('profiles').delete().eq('id', userId)
     return NextResponse.json({ error: { code: 'STAGES_ERROR', message: 'Failed to create pipeline stages', detail: stagesError.message } }, { status: 500 })
   }

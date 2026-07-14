@@ -9,7 +9,7 @@ export default async function ContactDetailPage({ params }: { params: Promise<{ 
   if (!user) redirect('/login')
 
   const { data: contact } = await supabase
-    .from('crm.contacts')
+    .from('contacts')
     .select(`
       *,
       company:companies(id,name,domain,industry),
@@ -24,7 +24,7 @@ export default async function ContactDetailPage({ params }: { params: Promise<{ 
   if (!contact) notFound()
 
   const { data: companies } = await supabase
-    .from('crm.companies')
+    .from('companies')
     .select('id,name')
     .order('name')
 

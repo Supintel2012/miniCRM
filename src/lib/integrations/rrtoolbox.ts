@@ -160,7 +160,7 @@ export async function getRrtConfigService(orgId: string): Promise<RrtConfig | nu
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
   )
   const { data } = await supabase
-    .from('crm.integration_credentials')
+    .from('integration_credentials')
     .select('config')
     .eq('org_id', orgId)
     .eq('provider', 'rrtoolbox')

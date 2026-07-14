@@ -15,7 +15,7 @@ export async function GET() {
   if (!auth) return unauthorized()
 
   const { data, error } = await auth.supabase
-    .from('crm.pipeline_stages')
+    .from('pipeline_stages')
     .select('*')
     .order('position')
 
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
   if (!profile) return unauthorized()
 
   const { data, error } = await auth.supabase
-    .from('crm.pipeline_stages')
+    .from('pipeline_stages')
     .insert({ ...parsed.data, org_id: profile.org_id })
     .select('*')
     .single()

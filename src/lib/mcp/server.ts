@@ -18,7 +18,7 @@ export function createMcpServer(supabase: SupabaseClient, orgId: string, scopes:
     tags: z.array(z.string()).optional(),
   }, async ({ q, limit, tags }) => {
     requireScope('read:contacts')
-    let query = supabase.from('crm.contacts')
+    let query = supabase.from('contacts')
       .select('id,first_name,last_name,email,phone,job_title,tags,company:companies(id,name)')
       .eq('org_id', orgId)
       .limit(limit)
@@ -31,7 +31,7 @@ export function createMcpServer(supabase: SupabaseClient, orgId: string, scopes:
 
   server.tool('get_contact', { id: z.string().uuid() }, async ({ id }) => {
     requireScope('read:contacts')
-    const { data, error } = await supabase.from('crm.contacts')
+    const { data, error } = await supabase.from('contacts')
       .select('*, company:companies(id,name), deals(id,title,value,stage:pipeline_stages(id,name)), activities(id,type,subject,status,due_at)')
       .eq('id', id).eq('org_id', orgId).single()
     if (error) throw error
@@ -47,7 +47,7 @@ export function createMcpServer(supabase: SupabaseClient, orgId: string, scopes:
     tags: z.array(z.string()).optional(),
   }, async (input) => {
     requireScope('write:contacts')
-    const { data, error } = await supabase.from('crm.contacts')
+    const { data, error } = await supabase.from('contacts')
       .insert({ ...input, org_id: orgId }).select('*').single()
     if (error) throw error
     return { content: [{ type: 'text', text: JSON.stringify(data) }] }
@@ -60,7 +60,7 @@ export function createMcpServer(supabase: SupabaseClient, orgId: string, scopes:
     limit: z.number().min(1).max(100).default(20),
   }, async ({ stage_id, contact_id, limit }) => {
     requireScope('read:deals')
-    let query = supabase.from('crm.deals')
+    let query = supabase.from('deals')
       .select('id,title,value,currency,stage:pipeline_stages(id,name,color),contact:contacts(id,first_name,last_name)')
       .eq('org_id', orgId).limit(limit)
     if (stage_id) query = query.eq('stage_id', stage_id)
@@ -72,7 +72,7 @@ export function createMcpServer(supabase: SupabaseClient, orgId: string, scopes:
 
   server.tool('get_deal', { id: z.string().uuid() }, async ({ id }) => {
     requireScope('read:deals')
-    const { data, error } = await supabase.from('crm.deals')
+    const { data, error } = await supabase.from('deals')
       .select('*, stage:pipeline_stages(*), contact:contacts(id,first_name,last_name,email), activities(*), notes(id,content)')
       .eq('id', id).eq('org_id', orgId).single()
     if (error) throw error
@@ -86,7 +86,7 @@ export function createMcpServer(supabase: SupabaseClient, orgId: string, scopes:
     contact_id: z.string().uuid().optional(),
   }, async (input) => {
     requireScope('write:deals')
-    const { data, error } = await supabase.from('crm.deals')
+    const { data, error } = await supabase.from('deals')
       .insert({ ...input, org_id: orgId }).select('*').single()
     if (error) throw error
     return { content: [{ type: 'text', text: JSON.stringify(data) }] }
@@ -97,7 +97,7 @@ export function createMcpServer(supabase: SupabaseClient, orgId: string, scopes:
     stage_id: z.string().uuid(),
   }, async ({ id, stage_id }) => {
     requireScope('write:deals')
-    const { data, error } = await supabase.from('crm.deals')
+    const { data, error } = await supabase.from('deals')
       .update({ stage_id }).eq('id', id).eq('org_id', orgId).select('*').single()
     if (error) throw error
     return { content: [{ type: 'text', text: JSON.stringify(data) }] }
@@ -112,7 +112,7 @@ export function createMcpServer(supabase: SupabaseClient, orgId: string, scopes:
     limit: z.number().default(20),
   }, async ({ contact_id, deal_id, type, status, limit }) => {
     requireScope('read:activities')
-    let query = supabase.from('crm.activities').select('*').eq('org_id', orgId).limit(limit)
+    let query = supabase.from('activities').select('*').eq('org_id', orgId).limit(limit)
     if (contact_id) query = query.eq('contact_id', contact_id)
     if (deal_id) query = query.eq('deal_id', deal_id)
     if (type) query = query.eq('type', type)

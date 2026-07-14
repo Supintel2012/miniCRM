@@ -9,7 +9,7 @@ export async function POST() {
   const { data: profile } = await supabase.from('profiles').select('org_id').eq('id', user.id).single()
   if (!profile) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data: token } = await supabase.from('crm.integration_tokens')
+  const { data: token } = await supabase.from('integration_tokens')
     .select('*').eq('org_id', profile.org_id).eq('provider', 'stripe').single()
 
   if (!token?.access_token) return NextResponse.json({ error: 'Stripe not configured' }, { status: 400 })

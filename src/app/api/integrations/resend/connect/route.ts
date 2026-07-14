@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: `Invalid API key: ${err instanceof Error ? err.message : 'Unknown'}` }, { status: 400 })
   }
 
-  const { error } = await supabase.from('crm.integration_tokens').upsert({
+  const { error } = await supabase.from('integration_tokens').upsert({
     org_id: profile.org_id,
     user_id: user.id,
     provider: 'resend',
@@ -46,7 +46,7 @@ export async function DELETE() {
   const { data: profile } = await supabase.from('profiles').select('org_id,role').eq('id', user.id).single()
   if (!profile || !['owner', 'admin'].includes(profile.role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  await supabase.from('crm.integration_tokens')
+  await supabase.from('integration_tokens')
     .delete()
     .eq('org_id', profile.org_id)
     .eq('provider', 'resend')

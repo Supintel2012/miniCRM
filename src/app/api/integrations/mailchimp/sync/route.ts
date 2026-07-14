@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
   const variant = new URL(request.url).searchParams.get('variant')
   const provider = variant === 'a' ? 'mailchimp_a' : variant === 'b' ? 'mailchimp_b' : 'mailchimp'
 
-  const { data: token } = await supabase.from('crm.integration_tokens')
+  const { data: token } = await supabase.from('integration_tokens')
     .select('*').eq('org_id', orgId).eq('provider', provider).single()
 
   if (!token?.access_token) return NextResponse.json({ error: `${provider} not connected` }, { status: 400 })
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
 
   // Save the selected audience_id to metadata for future syncs
   if (listId !== meta.audience_id) {
-    await supabase.from('crm.integration_tokens').update({
+    await supabase.from('integration_tokens').update({
       metadata: { ...meta, audience_id: listId },
     }).eq('org_id', orgId).eq('provider', provider)
   }
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
 
         // Dedup by email
         const { data: existing } = await supabase
-          .from('crm.contacts')
+          .from('contacts')
           .select('id,tags')
           .eq('org_id', orgId)
           .eq('email', member.email_address)
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
           // Add group tag and external_id if not already present
           const currentTags: string[] = (existing.tags as string[]) ?? []
           if (!currentTags.includes(groupTag)) {
-            await supabase.from('crm.contacts').update({
+            await supabase.from('contacts').update({
               external_ids: { [provider]: member.id },
               tags: [...currentTags, groupTag],
             }).eq('id', existing.id)
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
         }
 
         const statusTags = member.status !== 'subscribed' ? [member.status, groupTag] : [groupTag]
-        await supabase.from('crm.contacts').insert({
+        await supabase.from('contacts').insert({
           org_id: orgId,
           first_name: firstName,
           last_name: lastName,
