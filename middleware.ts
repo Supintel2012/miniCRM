@@ -7,6 +7,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next({ request })
   }
 
+  // Skip middleware for auth callback — the route handler needs to exchange
+  // the OAuth code and set session cookies without middleware's getUser()
+  // interfering (which can clear the PKCE code_verifier cookie).
+  const { pathname } = request.nextUrl
+  if (pathname.startsWith('/auth/callback')) {
+    return NextResponse.next({ request })
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -37,10 +45,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next({ request })
   }
 
-  const { pathname } = request.nextUrl
-
   // Public routes that don't require auth
-  const publicPaths = ['/login', '/register', '/onboarding', '/auth/callback', '/demo']
+  const publicPaths = ['/login', '/register', '/onboarding', '/demo']
   const isPublicPath = publicPaths.some(p => pathname.startsWith(p))
 
   // API auth routes (register, complete-onboarding) and webhooks bypass middleware auth
