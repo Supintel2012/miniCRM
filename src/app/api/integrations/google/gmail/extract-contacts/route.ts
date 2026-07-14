@@ -103,7 +103,7 @@ export async function POST() {
 
     for (const [email, info] of discovered) {
       const { data: existing } = await supabase
-        .from('contacts')
+        .from('crm.contacts')
         .select('id')
         .eq('org_id', orgId)
         .eq('email', email)
@@ -112,7 +112,7 @@ export async function POST() {
       if (existing) {
         // Link any unlinked synced_emails to this contact
         await supabase
-          .from('synced_emails')
+          .from('crm.synced_emails')
           .update({ contact_id: existing.id })
           .eq('org_id', orgId)
           .eq('from_email', email)
@@ -124,7 +124,7 @@ export async function POST() {
       const { first, last } = parseFirstLast(info.name)
 
       const { data: contact } = await supabase
-        .from('contacts')
+        .from('crm.contacts')
         .insert({
           org_id: orgId,
           first_name: first,
@@ -147,7 +147,7 @@ export async function POST() {
             `Email threads: ${info.subjects.slice(0, 5).map(s => `"${s}"`).join(', ')}`,
           ].join('\n')
 
-          await supabase.from('notes').insert({
+          await supabase.from('crm.notes').insert({
             org_id: orgId,
             contact_id: contact.id,
             content: contextNote,
@@ -157,7 +157,7 @@ export async function POST() {
 
         // Link existing synced_emails
         await supabase
-          .from('synced_emails')
+          .from('crm.synced_emails')
           .update({ contact_id: contact.id })
           .eq('org_id', orgId)
           .eq('from_email', email)

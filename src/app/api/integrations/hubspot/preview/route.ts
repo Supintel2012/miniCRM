@@ -11,7 +11,7 @@ export async function GET() {
   if (!profile) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { data: token } = await supabase
-    .from('integration_tokens')
+    .from('crm.integration_tokens')
     .select('access_token,metadata')
     .eq('org_id', profile.org_id)
     .eq('provider', 'hubspot')

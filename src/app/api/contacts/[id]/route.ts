@@ -10,7 +10,7 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
   const { supabase } = auth
 
   const { data, error } = await supabase
-    .from('contacts')
+    .from('crm.contacts')
     .select(`
       *,
       company:companies(id,name,domain,industry),
@@ -37,7 +37,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
   const { supabase } = auth
   const { data, error } = await supabase
-    .from('contacts')
+    .from('crm.contacts')
     .update(parsed.data)
     .eq('id', id)
     .select('*')
@@ -53,7 +53,7 @@ export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id:
 
   const { id } = await params
   const { supabase } = auth
-  const { error } = await supabase.from('contacts').delete().eq('id', id)
+  const { error } = await supabase.from('crm.contacts').delete().eq('id', id)
   if (error) return serverError(error.message)
   return noContent()
 }

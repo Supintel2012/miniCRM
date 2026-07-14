@@ -8,7 +8,7 @@ export default async function PipelineSettingsPage() {
   if (!user) redirect('/login')
 
   const { data: stages } = await supabase
-    .from('pipeline_stages')
+    .from('crm.pipeline_stages')
     .select('*')
     .order('position')
 

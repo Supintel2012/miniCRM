@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
   const from = (page - 1) * per_page
 
   let query = supabase
-    .from('activities')
+    .from('crm.activities')
     .select('*, contact:contacts(id,first_name,last_name), deal:deals(id,title), owner:profiles(id,full_name)', { count: 'exact' })
 
   if (contact_id) query = query.eq('contact_id', contact_id)
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
   if (!profile) return unauthorized()
 
   const { data, error } = await supabase
-    .from('activities')
+    .from('crm.activities')
     .insert({ ...parsed.data, org_id: profile.org_id })
     .select('*')
     .single()

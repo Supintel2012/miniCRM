@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
   )
 
   const { data: cred } = await supabase
-    .from('integration_credentials')
+    .from('crm.integration_credentials')
     .select('config')
     .eq('org_id', orgId)
     .eq('provider', 'flintt')
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
       const [firstName, ...rest] = data.name.split(' ')
       const lastName = rest.join(' ') || null
 
-      await supabase.from('contacts').upsert({
+      await supabase.from('crm.contacts').upsert({
         org_id: orgId,
         first_name: firstName,
         last_name: lastName,
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
 
     case 'company.created': {
       if (!data.name) break
-      await supabase.from('companies').upsert({
+      await supabase.from('crm.companies').upsert({
         org_id: orgId,
         name: data.name,
         domain: data.domain ?? null,
@@ -112,14 +112,14 @@ export async function POST(request: NextRequest) {
       // Log signal run results as an activity on the matched contact (by email)
       if (data.email) {
         const { data: contact } = await supabase
-          .from('contacts')
+          .from('crm.contacts')
           .select('id')
           .eq('org_id', orgId)
           .eq('email', data.email)
           .maybeSingle()
 
         if (contact) {
-          await supabase.from('activities').insert({
+          await supabase.from('crm.activities').insert({
             org_id: orgId,
             type: 'task',
             subject: `Flintt signal: ${eventType}`,

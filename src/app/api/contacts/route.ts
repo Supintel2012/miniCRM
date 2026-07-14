@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
   const order = searchParams.get('order') === 'asc'
 
   let query = supabase
-    .from('contacts')
+    .from('crm.contacts')
     .select('*, company:companies(id,name), owner:profiles(id,full_name)', { count: 'exact' })
 
   if (q) {
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
   if (!profile) return unauthorized()
 
   const { data, error } = await supabase
-    .from('contacts')
+    .from('crm.contacts')
     .insert({ ...parsed.data, org_id: profile.org_id })
     .select('*')
     .single()

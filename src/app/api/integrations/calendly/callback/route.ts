@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     const { resource } = await client.getCurrentUser()
 
     const supabase = await createClient()
-    await supabase.from('integration_tokens').upsert({
+    await supabase.from('crm.integration_tokens').upsert({
       org_id: payload.org_id,
       user_id: payload.user_id,
       provider: 'calendly',

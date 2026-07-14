@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
   // Create org
   const slug = org_name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-')
   const { data: org, error: orgError } = await adminSupabase
-    .from('organizations')
+    .from('crm.organizations')
     .insert({ name: org_name, slug: `${slug}-${Date.now()}` })
     .select('id')
     .single()
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
   })
 
   // Create default pipeline stages
-  await adminSupabase.from('pipeline_stages').insert(
+  await adminSupabase.from('crm.pipeline_stages').insert(
     DEFAULT_STAGES.map(s => ({ ...s, org_id: org.id }))
   )
 

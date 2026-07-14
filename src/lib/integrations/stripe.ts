@@ -14,7 +14,7 @@ export async function syncStripeContacts(orgId: string, secretKey: string, supab
 
     // Check for existing contact by Stripe customer ID first, then email
     const { data: byExternal } = await supabase
-      .from('contacts')
+      .from('crm.contacts')
       .select('id')
       .eq('org_id', orgId)
       .eq("external_ids->>'stripe_customer_id'", customer.id)
@@ -26,7 +26,7 @@ export async function syncStripeContacts(orgId: string, secretKey: string, supab
     }
 
     const { data: byEmail } = await supabase
-      .from('contacts')
+      .from('crm.contacts')
       .select('id')
       .eq('org_id', orgId)
       .eq('email', customer.email)
@@ -34,14 +34,14 @@ export async function syncStripeContacts(orgId: string, secretKey: string, supab
 
     if (byEmail) {
       // Tag with external ID
-      await supabase.from('contacts')
+      await supabase.from('crm.contacts')
         .update({ external_ids: { stripe_customer_id: customer.id } })
         .eq('id', byEmail.id)
       synced++
       continue
     }
 
-    await supabase.from('contacts').insert({
+    await supabase.from('crm.contacts').insert({
       org_id: orgId,
       first_name: customer.name?.split(' ')[0] ?? customer.email.split('@')[0],
       last_name: customer.name?.split(' ').slice(1).join(' ') || null,
@@ -62,7 +62,7 @@ export async function syncStripeDeals(orgId: string, secretKey: string, supabase
 
   // Get the first non-won, non-lost pipeline stage for this org
   const { data: stages } = await supabase
-    .from('pipeline_stages')
+    .from('crm.pipeline_stages')
     .select('id,is_won,is_lost')
     .eq('org_id', orgId)
     .order('position')
@@ -77,7 +77,7 @@ export async function syncStripeDeals(orgId: string, secretKey: string, supabase
 
     // Dedup by stripe_subscription_id
     const { data: existing } = await supabase
-      .from('deals')
+      .from('crm.deals')
       .select('id')
       .eq('org_id', orgId)
       .eq("external_ids->>'stripe_subscription_id'", sub.id)
@@ -87,7 +87,7 @@ export async function syncStripeDeals(orgId: string, secretKey: string, supabase
 
     // Find the linked contact
     const { data: contact } = customer.email
-      ? await supabase.from('contacts').select('id').eq('org_id', orgId).eq('email', customer.email).maybeSingle()
+      ? await supabase.from('crm.contacts').select('id').eq('org_id', orgId).eq('email', customer.email).maybeSingle()
       : { data: null }
 
     // Compute monthly value (convert to monthly if annual billing)
@@ -110,7 +110,7 @@ export async function syncStripeDeals(orgId: string, secretKey: string, supabase
     // Map subscription status to stage
     const stageId = sub.status === 'active' && wonStage ? wonStage.id : defaultStage.id
 
-    await supabase.from('deals').insert({
+    await supabase.from('crm.deals').insert({
       org_id: orgId,
       title,
       value: monthlyValue > 0 ? monthlyValue : null,

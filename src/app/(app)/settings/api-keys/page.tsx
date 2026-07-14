@@ -8,7 +8,7 @@ export default async function ApiKeysPage() {
   if (!user) redirect('/login')
 
   const { data: keys } = await supabase
-    .from('mcp_api_keys')
+    .from('crm.mcp_api_keys')
     .select('id,org_id,name,scopes,last_used,expires_at,created_at,created_by')
     .order('created_at', { ascending: false })
 

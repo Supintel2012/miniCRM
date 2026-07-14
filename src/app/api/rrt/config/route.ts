@@ -51,7 +51,7 @@ export async function PUT(request: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
   )
   const { error } = await serviceSupabase
-    .from('integration_credentials')
+    .from('crm.integration_credentials')
     .upsert(
       {
         org_id: profile.org_id,

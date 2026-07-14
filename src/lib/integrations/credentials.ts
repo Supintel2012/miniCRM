@@ -31,7 +31,7 @@ export async function getCredentials(provider: string, orgId: string): Promise<P
   // Check DB first
   const supabase = await createClient()
   const { data } = await supabase
-    .from('integration_credentials')
+    .from('crm.integration_credentials')
     .select('config')
     .eq('org_id', orgId)
     .eq('provider', provider)
@@ -48,14 +48,14 @@ export async function getCredentials(provider: string, orgId: string): Promise<P
 export async function saveCredentials(provider: string, orgId: string, config: ProviderCredentials): Promise<void> {
   const supabase = await createClient()
   await supabase
-    .from('integration_credentials')
+    .from('crm.integration_credentials')
     .upsert({ org_id: orgId, provider, config }, { onConflict: 'org_id,provider' })
 }
 
 export async function deleteCredentials(provider: string, orgId: string): Promise<void> {
   const supabase = await createClient()
   await supabase
-    .from('integration_credentials')
+    .from('crm.integration_credentials')
     .delete()
     .eq('org_id', orgId)
     .eq('provider', provider)

@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: 'Invalid input' }, { status: 400 })
 
   // Get Resend token
-  const { data: token } = await supabase.from('integration_tokens')
+  const { data: token } = await supabase.from('crm.integration_tokens')
     .select('access_token')
     .eq('org_id', profile.org_id)
     .eq('provider', 'resend')
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
   if (!token?.access_token) return NextResponse.json({ error: 'Resend not connected' }, { status: 400 })
 
   const { data: orgData } = await supabase
-    .from('organizations')
+    .from('crm.organizations')
     .select('name')
     .eq('id', profile.org_id)
     .single()
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Log as email activity
-    await supabase.from('activities').insert({
+    await supabase.from('crm.activities').insert({
       org_id: profile.org_id,
       type: 'email',
       subject: parsed.data.subject,

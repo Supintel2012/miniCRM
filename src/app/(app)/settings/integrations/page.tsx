@@ -15,7 +15,7 @@ export default async function IntegrationsPage() {
     .single()
 
   const { data: tokens } = await supabase
-    .from('integration_tokens')
+    .from('crm.integration_tokens')
     .select('provider,enabled,metadata,token_expires_at,updated_at')
 
   const canManage = ['owner', 'admin'].includes(profile?.role ?? '')
