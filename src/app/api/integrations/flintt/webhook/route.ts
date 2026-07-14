@@ -82,7 +82,32 @@ export async function POST(request: NextRequest) {
       const [firstName, ...rest] = data.name.split(' ')
       const lastName = rest.join(' ') || null
 
-      const { error: contactError } = await supabase.from('contacts').upsert({
+      // Check for existing contact by email (if available) to avoid duplicates
+      if (data.email) {
+        const { data: existing } = await supabase
+          .from('contacts')
+          .select('id')
+          .eq('org_id', orgId)
+          .eq('email', data.email)
+          .maybeSingle()
+        if (existing) {
+          // Update existing contact
+          const { error: updateError } = await supabase.from('contacts').update({
+            first_name: firstName,
+            last_name: lastName,
+            job_title: data.title ?? null,
+            source: 'flintt',
+            external_ids: data.id ? { flintt_prospect_id: data.id } : {},
+            custom_fields: data.linkedin_url ? { linkedin_url: data.linkedin_url } : {},
+          }).eq('id', existing.id)
+          if (updateError) {
+            return NextResponse.json({ error: 'Failed to update contact', detail: updateError.message }, { status: 500 })
+          }
+          break
+        }
+      }
+
+      const { error: contactError } = await supabase.from('contacts').insert({
         org_id: orgId,
         first_name: firstName,
         last_name: lastName,
@@ -91,7 +116,7 @@ export async function POST(request: NextRequest) {
         source: 'flintt',
         external_ids: data.id ? { flintt_prospect_id: data.id } : {},
         custom_fields: data.linkedin_url ? { linkedin_url: data.linkedin_url } : {},
-      }, { onConflict: 'org_id,email' })
+      })
       if (contactError) {
         return NextResponse.json({ error: 'Failed to create contact', detail: contactError.message }, { status: 500 })
       }
@@ -100,13 +125,32 @@ export async function POST(request: NextRequest) {
 
     case 'company.created': {
       if (!data.name) break
-      const { error: companyError } = await supabase.from('companies').upsert({
+      // Check for existing company by name to avoid duplicates
+      const { data: existingCo } = await supabase
+        .from('companies')
+        .select('id')
+        .eq('org_id', orgId)
+        .eq('name', data.name)
+        .maybeSingle()
+      if (existingCo) {
+        const { error: updateError } = await supabase.from('companies').update({
+          domain: data.domain ?? null,
+          external_ids: data.id ? { flintt_company_id: data.id } : {},
+          custom_fields: data.linkedin_url ? { linkedin_url: data.linkedin_url } : {},
+        }).eq('id', existingCo.id)
+        if (updateError) {
+          return NextResponse.json({ error: 'Failed to update company', detail: updateError.message }, { status: 500 })
+        }
+        break
+      }
+
+      const { error: companyError } = await supabase.from('companies').insert({
         org_id: orgId,
         name: data.name,
         domain: data.domain ?? null,
         external_ids: data.id ? { flintt_company_id: data.id } : {},
         custom_fields: data.linkedin_url ? { linkedin_url: data.linkedin_url } : {},
-      }, { onConflict: 'org_id,name' })
+      })
       if (companyError) {
         return NextResponse.json({ error: 'Failed to create company', detail: companyError.message }, { status: 500 })
       }
