@@ -20,28 +20,28 @@ export default function DemoDashboardPage() {
           value={metrics.total_contacts}
           sub={`+${metrics.new_contacts_30d} this month`}
           icon={Users}
-          color="indigo"
+          accent="neutral"
         />
         <DashboardMetricCard
           title="Active Deals"
           value={metrics.total_deals}
           sub="in pipeline"
           icon={TrendingUp}
-          color="violet"
+          accent="neutral"
         />
         <DashboardMetricCard
           title="Pipeline Value"
           value={`$${(metrics.total_pipeline_value / 1000).toFixed(0)}k`}
           sub={`$${(metrics.won_value_30d / 1000).toFixed(0)}k won this month`}
           icon={DollarSign}
-          color="emerald"
+          accent="primary"
         />
         <DashboardMetricCard
           title="Due Today"
           value={metrics.activities_due_today}
           sub="activities"
           icon={CalendarCheck}
-          color="amber"
+          accent="neutral"
         />
       </div>
 
