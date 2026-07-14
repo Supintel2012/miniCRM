@@ -9,7 +9,7 @@ export default async function CompanyDetailPage({ params }: { params: Promise<{ 
   if (!user) redirect('/login')
 
   const { data: company } = await supabase
-    .from('companies')
+    .from('crm.companies')
     .select(`
       *,
       owner:profiles(id,full_name),

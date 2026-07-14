@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
   if (!orgId) return NextResponse.json({ error: 'Missing org_id' }, { status: 400 })
 
   const supabase = await createServiceClient()
-  const { data: token } = await supabase.from('integration_tokens')
+  const { data: token } = await supabase.from('crm.integration_tokens')
     .select('*').eq('org_id', orgId).eq('provider', 'stripe').single()
 
   if (!token) return NextResponse.json({ error: 'Stripe not configured' }, { status: 400 })
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     case 'customer.updated': {
       const customer = event.data.object as Stripe.Customer
       if (customer.email) {
-        await supabase.from('contacts').upsert({
+        await supabase.from('crm.contacts').upsert({
           org_id: orgId,
           first_name: customer.name?.split(' ')[0] ?? customer.email.split('@')[0],
           last_name: customer.name?.split(' ').slice(1).join(' ') || null,
@@ -48,9 +48,9 @@ export async function POST(request: NextRequest) {
       const invoice = event.data.object as Stripe.Invoice
       const customerEmail = typeof invoice.customer_email === 'string' ? invoice.customer_email : null
       if (customerEmail) {
-        const { data: contact } = await supabase.from('contacts').select('id').eq('email', customerEmail).eq('org_id', orgId).maybeSingle()
+        const { data: contact } = await supabase.from('crm.contacts').select('id').eq('email', customerEmail).eq('org_id', orgId).maybeSingle()
         if (contact) {
-          await supabase.from('activities').insert({
+          await supabase.from('crm.activities').insert({
             org_id: orgId,
             type: 'email',
             subject: event.type === 'invoice.paid'

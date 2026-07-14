@@ -13,7 +13,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   if (!profile) return unauthorized()
 
   const { error } = await supabase
-    .from('integration_tokens')
+    .from('crm.integration_tokens')
     .update({ enabled })
     .eq('org_id', profile.org_id)
     .eq('provider', provider)
@@ -33,7 +33,7 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
   if (!profile) return unauthorized()
 
   const { error } = await supabase
-    .from('integration_tokens')
+    .from('crm.integration_tokens')
     .delete()
     .eq('org_id', profile.org_id)
     .eq('provider', provider)

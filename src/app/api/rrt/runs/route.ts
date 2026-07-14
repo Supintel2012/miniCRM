@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
   if (!dealId && !contactId) return badRequest('Provide deal_id or contact_id')
 
   let query = auth.supabase
-    .from('rrt_model_runs')
+    .from('crm.rrt_model_runs')
     .select('id,model_name,deal_id,contact_id,summary,recommended_action,key_drivers,warnings,attribution,success,error_message,duration_ms,created_at')
     .eq('org_id', profile.org_id)
     .order('created_at', { ascending: false })

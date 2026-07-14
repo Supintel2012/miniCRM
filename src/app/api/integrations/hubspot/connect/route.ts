@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     const hs = getHubSpotClient(parsed.data.access_token)
     const account = await hs.getAccountInfo()
 
-    const { error } = await supabase.from('integration_tokens').upsert({
+    const { error } = await supabase.from('crm.integration_tokens').upsert({
       org_id: profile.org_id,
       provider: 'hubspot',
       access_token: parsed.data.access_token,
@@ -46,7 +46,7 @@ export async function DELETE() {
   const { data: profile } = await supabase.from('profiles').select('org_id').eq('id', user.id).single()
   if (!profile) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  await supabase.from('integration_tokens')
+  await supabase.from('crm.integration_tokens')
     .delete()
     .eq('org_id', profile.org_id)
     .eq('provider', 'hubspot')

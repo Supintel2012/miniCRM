@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     const startTime = payload?.event?.start_time
 
     if (email) {
-      const { data: contact } = await supabase.from('contacts')
+      const { data: contact } = await supabase.from('crm.contacts')
         .upsert({
           org_id: orgId,
           first_name: name.split(' ')[0] || email.split('@')[0],
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
         .select('id')
         .single()
 
-      await supabase.from('activities').insert({
+      await supabase.from('crm.activities').insert({
         org_id: orgId,
         type: 'meeting',
         subject: `Calendly: ${eventName}`,

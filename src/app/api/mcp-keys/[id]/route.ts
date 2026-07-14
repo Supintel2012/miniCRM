@@ -10,7 +10,7 @@ export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id:
   if (!profile) return unauthorized()
   if (!['owner', 'admin'].includes(profile.role)) return forbidden()
 
-  const { error } = await auth.supabase.from('mcp_api_keys').delete().eq('id', id)
+  const { error } = await auth.supabase.from('crm.mcp_api_keys').delete().eq('id', id)
   if (error) return serverError(error.message)
   return noContent()
 }

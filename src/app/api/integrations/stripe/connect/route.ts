@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
   const parsed = schema.safeParse(body)
   if (!parsed.success) return NextResponse.json({ error: { message: 'Invalid input' } }, { status: 400 })
 
-  const { error } = await supabase.from('integration_tokens').upsert({
+  const { error } = await supabase.from('crm.integration_tokens').upsert({
     org_id: profile.org_id,
     provider: 'stripe',
     access_token: parsed.data.secret_key,

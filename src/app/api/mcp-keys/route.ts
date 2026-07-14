@@ -18,7 +18,7 @@ export async function GET() {
   if (!profile) return unauthorized()
 
   const { data, error } = await auth.supabase
-    .from('mcp_api_keys')
+    .from('crm.mcp_api_keys')
     .select('id,name,scopes,last_used,expires_at,created_at,created_by')
     .order('created_at', { ascending: false })
 
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
   const keyHash = await bcrypt.hash(plainKey, 10)
 
   const { data, error } = await auth.supabase
-    .from('mcp_api_keys')
+    .from('crm.mcp_api_keys')
     .insert({
       org_id: profile.org_id,
       name: parsed.data.name,

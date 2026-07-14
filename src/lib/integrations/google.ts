@@ -57,7 +57,7 @@ export function verifyState(token: string): Record<string, unknown> | null {
 export async function getTokensForOrg(orgId: string) {
   const supabase = await createClient()
   const { data } = await supabase
-    .from('integration_tokens')
+    .from('crm.integration_tokens')
     .select('*')
     .eq('org_id', orgId)
     .eq('provider', 'google')
@@ -68,7 +68,7 @@ export async function getTokensForOrg(orgId: string) {
 export async function getAuthorizedClient(orgId: string) {
   const supabase = await createClient()
   const { data: token } = await supabase
-    .from('integration_tokens')
+    .from('crm.integration_tokens')
     .select('*')
     .eq('org_id', orgId)
     .eq('provider', 'google')
@@ -87,7 +87,7 @@ export async function getAuthorizedClient(orgId: string) {
 
   // Auto-refresh if expired
   client.on('tokens', async (newTokens) => {
-    await supabase.from('integration_tokens').update({
+    await supabase.from('crm.integration_tokens').update({
       access_token: newTokens.access_token,
       token_expires_at: newTokens.expiry_date ? new Date(newTokens.expiry_date).toISOString() : null,
     }).eq('org_id', orgId).eq('provider', 'google')
