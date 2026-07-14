@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { IntegrationsSettings } from '@/components/settings/IntegrationsSettings'
 import { RrtSettings } from '@/components/settings/RrtSettings'
+import { FlinttSettings } from '@/components/settings/FlinttSettings'
 
 export default async function IntegrationsPage() {
   const supabase = await createClient()
@@ -9,7 +10,7 @@ export default async function IntegrationsPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('org_id,role')
     .eq('id', user.id)
     .single()
 
@@ -28,6 +29,13 @@ export default async function IntegrationsPage() {
         </p>
       </div>
       <IntegrationsSettings tokens={tokens ?? []} />
+      <div className="pt-2 border-t border-border">
+        <h2 className="text-lg font-semibold mb-1">Automated Outreach</h2>
+        <p className="text-sm text-muted-foreground mb-4">
+          Receive prospect events from outreach tools as new contacts.
+        </p>
+        <FlinttSettings canManage={canManage} orgId={profile?.org_id ?? ''} />
+      </div>
       <div className="pt-2 border-t border-border">
         <h2 className="text-lg font-semibold mb-1">Decision Intelligence</h2>
         <p className="text-sm text-muted-foreground mb-4">
