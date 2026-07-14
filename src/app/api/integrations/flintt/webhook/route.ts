@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
       const [firstName, ...rest] = data.name.split(' ')
       const lastName = rest.join(' ') || null
 
-      await supabase.from('contacts').upsert({
+      const { error: contactError } = await supabase.from('contacts').upsert({
         org_id: orgId,
         first_name: firstName,
         last_name: lastName,
@@ -92,18 +92,24 @@ export async function POST(request: NextRequest) {
         external_ids: data.id ? { flintt_prospect_id: data.id } : {},
         custom_fields: data.linkedin_url ? { linkedin_url: data.linkedin_url } : {},
       }, { onConflict: 'org_id,email' })
+      if (contactError) {
+        return NextResponse.json({ error: 'Failed to create contact', detail: contactError.message }, { status: 500 })
+      }
       break
     }
 
     case 'company.created': {
       if (!data.name) break
-      await supabase.from('companies').upsert({
+      const { error: companyError } = await supabase.from('companies').upsert({
         org_id: orgId,
         name: data.name,
         domain: data.domain ?? null,
         external_ids: data.id ? { flintt_company_id: data.id } : {},
         custom_fields: data.linkedin_url ? { linkedin_url: data.linkedin_url } : {},
       }, { onConflict: 'org_id,name' })
+      if (companyError) {
+        return NextResponse.json({ error: 'Failed to create company', detail: companyError.message }, { status: 500 })
+      }
       break
     }
 
